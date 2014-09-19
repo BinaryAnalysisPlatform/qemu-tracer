@@ -10910,14 +10910,15 @@ static inline void gen_intermediate_code_internal(ARMCPU *cpu,
         } else {
             disas_arm_insn(env, dc);
         }
-#ifdef HAS_TRACEWRAP
-        gen_trace_endframe(dc);
-#endif //HAS_TRACEWRAP
 
         if (dc->condjmp && !dc->is_jmp) {
             gen_set_label(dc->condlabel);
             dc->condjmp = 0;
         }
+
+#ifdef HAS_TRACEWRAP
+        gen_trace_endframe(dc);
+#endif //HAS_TRACEWRAP
 
         if (tcg_check_temp_count()) {
             fprintf(stderr, "TCG temporary leak before "TARGET_FMT_lx"\n",

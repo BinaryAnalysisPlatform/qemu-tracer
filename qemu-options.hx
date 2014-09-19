@@ -2573,6 +2573,16 @@ STEXI
 Like -monitor but opens in 'control' mode.
 ETEXI
 
+DEF("tracefile", HAS_ARG, QEMU_OPTION_tracefile, \
+    "-tracefile file    write BAP traces to file\n",
+    QEMU_ARCH_ARM)
+STEXI
+@item -tracefile @var{file}
+@findex -tracefile
+Write BAP traces into file @var{file}.
+Default: /dev/shm/proto
+ETEXI
+
 DEF("mon", HAS_ARG, QEMU_OPTION_mon, \
     "-mon [chardev=]name[,mode=readline|control][,default]\n", QEMU_ARCH_ALL)
 STEXI

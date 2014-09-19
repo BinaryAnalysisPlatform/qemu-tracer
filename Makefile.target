@@ -155,6 +155,8 @@ dummy := $(call unnest-vars,.., \
 # Now restore obj-y
 obj-y := $(obj-y-save)
 
+common-obj-$(HAS_TRACEWRAP) += tracewrap.o
+
 all-obj-y = $(obj-y) $(common-obj-y)
 all-obj-$(CONFIG_SOFTMMU) += $(block-obj-y)
 

@@ -1,6 +1,5 @@
 #include "tracewrap.h"
 #include "trace_consts.h"
-#include <string.h>
 
 Frame * g_frame;
 struct toc_entry *toc;
@@ -13,6 +12,9 @@ FILE *qemu_tracefile;
 
 void do_qemu_set_trace(const char *tracefilename)
 {
+        if (tracefilename == NULL) {
+            tracefilename = "/dev/shm/proto";
+        }
         printf("Setting qemu_tracefile at %s\n", tracefilename);
         qemu_tracefile = fopen(tracefilename, "wb");
         if (qemu_tracefile == NULL) {
@@ -28,7 +30,8 @@ void qemu_trace_newframe(uint64_t addr, int thread_id)
 {
     if (open_frame)
     {
-        fprintf(stderr, "frame still open! 0x%08lx\n", (long unsigned int)addr);
+        fprintf(stderr, "frame still open! 0x%08lx\n", 
+            (long unsigned int)g_frame->std_frame->address);
         qemu_trace_endframe(NULL, 0, 0); 
     }
     open_frame = 1;
@@ -112,8 +115,9 @@ void qemu_trace_endframe(CPUArchState *env, target_ulong pc, size_t size)
     StdFrame *sframe = g_frame->std_frame;
     sframe->rawbytes.len = size;
     sframe->rawbytes.data = (uint8_t *)malloc(size);
-    for (i = 0; i < size; i++)
-	sframe->rawbytes.data[i] = cpu_ldub_code(env, pc+i);
+    for (i = 0; i < size; i++) {
+        sframe->rawbytes.data[i] = cpu_ldub_code(env, pc+i);
+    }
 
     size_t msg_size = frame__get_packed_size(g_frame);
     uint8_t *packed_buffer = (uint8_t *)malloc(msg_size);

@@ -5,6 +5,13 @@ import struct
 import getopt
 import sys
 import IPython
+import pickle
+from collections import defaultdict
+import google   
+
+FMT_TXT=0x1
+FMT_PKL_HIGHLIGHT=0x2
+FMT_UNIQ_INSNS=0x3
 
 def getFrameLength(f):
         return struct.unpack("Q", f.read(8))[0]
@@ -55,7 +62,7 @@ def printFrame(f):
         print "PRE: %s" % printOperandList(f.std_frame.operand_pre_list.elem)
         print "POST: %s" % printOperandList(f.std_frame.operand_post_list.elem)
 
-def process(infileName, outfileName=None, maxCnt=0):
+def process(infileName, outfileName=None, maxCnt=0, outFormat=FMT_TXT):
         out = sys.stdout
         if outfileName:
                 out = open(outfileName, 'w')
@@ -70,15 +77,24 @@ def process(infileName, outfileName=None, maxCnt=0):
 
         print "maxCnt: %i" % maxCnt
 
+        insns = defaultdict(lambda : 0)
         while (cnt <= maxCnt):
                 cnt += 1
                 try:
                     fr = getFrame(infile)
+                    insns[fr.std_frame.address]+=1 
                 except google.protobuf.message.DecodeError, e:
                     print "maxCnt: %i, cnt: %i\n" % (maxCnt, cnt)
                     print e
                     break
-                out.write("0x%x, %r\n" % (fr.std_frame.address, fr.std_frame.rawbytes))
+                if outFormat == FMT_TXT:
+                    out.write("0x%x, %r\n" % (fr.std_frame.address, fr.std_frame.rawbytes))
+
+        if outFormat == FMT_PKL_HIGHLIGHT:
+            highlight_data = {1:set(insns.keys())}
+            pickle.dump(highlight_data, out)
+        elif outFormat == FMT_UNIQ_INSNS:
+            out.write("\n".join(["0x%x" % i for i in set(insns.keys())]))
 
 def getMetaData(f):
         f.seek(0x20)
@@ -91,7 +107,8 @@ def main():
         maxCnt = 0
         infile = None
         outfile = None
-        opts,argv = getopt.getopt(sys.argv[1:], "f:c:o:d") 
+        outFormat = FMT_TXT
+        opts,argv = getopt.getopt(sys.argv[1:], "f:c:o:F:d") 
         for k,v in opts:
                 if k == '-d':
                         debug += 1
@@ -101,9 +118,14 @@ def main():
                         outfile = v
                 if k == '-c':
                         maxCnt = int(v)
+                if k == '-F':
+                        if v == 'pkl':
+                            outFormat = FMT_PKL_HIGHLIGHT
+                        elif v == 'uniq':
+                            outFormat = FMT_UNIQ_INSNS
 
         if infile:
-                process(infile, outfile, maxCnt)
+                process(infile, outfile, maxCnt, outFormat)
 
 if __name__ == "__main__":
         main()

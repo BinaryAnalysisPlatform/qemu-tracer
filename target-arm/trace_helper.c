@@ -60,7 +60,7 @@ OperandInfo * load_store_mem(uint32_t addr, uint32_t val, int ls, int len)
         }
         OperandInfo *oi = (OperandInfo *)malloc(sizeof(OperandInfo));
         operand_info__init(oi);
-        oi->bit_length = 0;
+        oi->bit_length = len * 8;
         oi->operand_info_specific = ois;
         oi->operand_usage = ou;
         oi->value.len = len;

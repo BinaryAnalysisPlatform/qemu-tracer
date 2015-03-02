@@ -30,6 +30,10 @@
 
 #include "config-host.h"
 
+#ifdef HAS_TRACEWRAP
+#include "gtracewrap.h"
+#endif
+
 #ifdef CONFIG_SECCOMP
 #include "sysemu/seccomp.h"
 #endif
@@ -2957,6 +2961,9 @@ int main(int argc, char **argv, char **envp)
     bool userconfig = true;
     const char *log_mask = NULL;
     const char *log_file = NULL;
+#ifdef HAS_TRACEWRAP
+    const char *tracefile = NULL;
+#endif
     GMemVTable mem_trace = {
         .malloc = malloc_and_trace,
         .realloc = realloc_and_trace,
@@ -3412,6 +3419,11 @@ int main(int argc, char **argv, char **envp)
                     monitor_parse(optarg, "readline");
                 }
                 break;
+#ifdef HAS_TRACEWRAP
+            case QEMU_OPTION_tracefile:
+                tracefile = optarg;
+                break;
+#endif
             case QEMU_OPTION_qmp:
                 monitor_parse(optarg, "control");
                 default_monitor = 0;
@@ -3907,6 +3919,11 @@ int main(int argc, char **argv, char **envp)
             }
         }
     }
+
+#ifdef HAS_TRACEWRAP
+    do_qemu_set_trace(tracefile);
+#endif
+
     loc_set_none();
 
     if (qemu_init_main_loop()) {
